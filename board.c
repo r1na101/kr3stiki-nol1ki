@@ -31,10 +31,10 @@ static void print_hor_boarder(int stolbci)
 
 void print_board(char** board, int stroki, int stolbci, int win_type, int win_idx, int win_diag)
 {
-#ifndef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
     system("cls");
 #else
-	system("clear");
+    system("clear");
 #endif
     printf("\n");
     print_hor_boarder(stolbci);
