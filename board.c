@@ -31,7 +31,7 @@ static void print_hor_boarder(int stolbci)
 
 void print_board(char** board, int stroki, int stolbci, int win_type, int win_idx, int win_diag)
 {
-#indef _WIN32
+#ifndef _WIN32
     system("cls");
 #else
 	system("clear");
