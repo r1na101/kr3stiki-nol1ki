@@ -1,9 +1,0 @@
-<Solution>
-  <Configurations>
-    <Platform Name="x64" />
-    <Platform Name="x86" />
-  </Configurations>
-  <Project Path="crestiki_noliki/crestiki_noliki.vcxproj" Id="8e31afe3-c1c6-470b-bac7-e87612c6b55d">
-    <BuildType Solution="Debug|x64" Project="Release" />
-  </Project>
-</Solution>
