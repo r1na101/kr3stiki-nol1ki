@@ -6,11 +6,11 @@
 
 int main()
 {
-    int stroki, stolbci, p3_404;
+    int stroki, stolbci, mode;
     char p1_sym, p2_sym;
 
     window_setup(64, 28);
-    setup_game(&stroki, &stolbci, &p1_sym, &p2_sym, &p3_404);
+    setup_game(&stroki, &stolbci, &p1_sym, &p2_sym, &mode);
 
     // подгон окнa под выбранный размер поля
     int cols = 2 * stolbci + 10; if (cols < 64) cols = 64;
@@ -26,7 +26,7 @@ int main()
     {
         print_board(board, stroki, stolbci, 0, -1, 0);
 
-        if (p3_404 == 2 && current_player == 2)
+        if (mode == 2 && current_player == 2)
         {
             make_404_m(board, stroki, stolbci, p2_sym, p1_sym);
         }
@@ -40,7 +40,7 @@ int main()
         if (check_win(board, stroki, stolbci, checking_sym, &win_type, &win_idx, &win_diag))
         {
             print_board(board, stroki, stolbci, win_type, win_idx, win_diag);
-            if (p3_404 == 2 && current_player == 2)
+            if (mode == 2 && current_player == 2)
             {
                 printf("\n[ 404 ]: Ya viigrala! Gotovsya k sleduyushey partii.\n");
                 printf(" --- Pobeda za programmoi (%c)! ---\n", p2_sym);
@@ -48,7 +48,7 @@ int main()
             }
             else
             {
-                if (p3_404 == 2)
+                if (mode == 2)
                 {
                     printf("\n[ 404 ]: Ti viigral... Ya ne ozhidala.\n");
                     sprite_show("file_404.MP4");
@@ -61,7 +61,7 @@ int main()
         if (is_board_full(board, stroki, stolbci))
         {
             print_board(board, stroki, stolbci, 0, -1, 0);
-            if (p3_404 == 2)
+            if (mode == 2)
             {
                 printf("\n[ 404 ]: Nichiya. Neploho sygrali.\n");
                 sprite_show("smle.PNG");
