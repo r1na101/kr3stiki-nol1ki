@@ -10,19 +10,11 @@
 #include <wchar.h>
 
 #define SPRITE_W    383
-#define FONT_HEIGHT 22    
+#define FONT_HEIGHT 22
 #define APP_ICON_ID 101
 
 static HANDLE g_sprite = NULL;
-static void dpi_aware(void)
-{
-    static int done = 0;
-    if (!done)
-    {
-        SetProcessDPIAware();
-        done = 1;
-    }
-}
+
 // во сколько раз экранное масштабирование винды больше 100%
 static double dpi_scale(void)
 {
@@ -31,7 +23,8 @@ static double dpi_scale(void)
     ReleaseDC(NULL, dc);
     return dpi / 96.0;
 }
-
+// Настоящая (классическая) консоль имеет класс окна ConsoleWindowClass.
+// В Windows Terminal GetConsoleWindow() возвращает служебное окно, которое двигать нельзя.
 static int is_classic_console(HWND w)
 {
     char cls[64];
@@ -55,18 +48,18 @@ static void set_font_height(int height)
 
 void window_setup(int cols, int lines)
 {
-    dpi_aware();
+    SetProcessDPIAware();
 
     HWND con = GetConsoleWindow();
     if (!is_classic_console(con))
     {
-        // окно винд терминал нельзя двигать и менять, игра перезапускается 1 раз
+        // XO_CLASSIC - защита от зацикливания
         if (getenv("XO_CLASSIC") == NULL)
         {
             char exe[MAX_PATH], cmd[MAX_PATH + 64];
             GetModuleFileNameA(NULL, exe, MAX_PATH);
             _putenv("XO_CLASSIC=1");
-            sprintf(cmd, "start \"\" conhost.exe \"%s\"", exe); // защита от зацикл
+            sprintf(cmd, "start \"\" conhost.exe \"%s\"", exe);
             if (system(cmd) == 0)
                 exit(0); // новая игра запущена в другом окне, это окно закрывается
         }
@@ -84,19 +77,33 @@ void window_setup(int cols, int lines)
     // крупный шрифт (до изменения размера окна, чтобы окно подогналось под него)
     set_font_height(FONT_HEIGHT);
 
+    static int first_call = 1;
+    RECT r, wa;
+    SystemParametersInfoA(SPI_GETWORKAREA, 0, &wa, 0);
+    GetWindowRect(con, &r);
+    int cx = (r.left + r.right) / 2;
+    int cy = (r.top + r.bottom) / 2;
+    if (first_call)
+    {
+        cx = (wa.left + wa.right) / 2;
+        cy = (wa.top + wa.bottom) / 2;
+        first_call = 0;
+    }
+
     // размер окошка в символах
     char cmd[64];
     sprintf(cmd, "mode con cols=%d lines=%d >nul", cols, lines);
     system(cmd);
-
     // позиция окошка по умолчанию - центр экрана
-    RECT r, wa;
     GetWindowRect(con, &r);
-    SystemParametersInfoA(SPI_GETWORKAREA, 0, &wa, 0);
     int w = r.right - r.left;
     int h = r.bottom - r.top;
-    int x = wa.left + ((wa.right - wa.left) - w) / 2;
-    int y = wa.top + ((wa.bottom - wa.top) - h) / 2;
+    int x = cx - w / 2;
+    int y = cy - h / 2;
+    if (x + w > wa.right) x = wa.right - w;
+    if (y + h > wa.bottom) y = wa.bottom - h;
+    if (x < wa.left) x = wa.left;
+    if (y < wa.top) y = wa.top;
     SetWindowPos(con, NULL, x, y, w, h, SWP_NOZORDER);
 }
 
@@ -112,11 +119,9 @@ void sprite_hide(void)
 
 void sprite_show(const char* image_name)
 {
-    dpi_aware();
-
-    char exe[MAX_PATH], dir[MAX_PATH];
-    GetModuleFileNameA(NULL, exe, MAX_PATH);
-    strcpy(dir, exe);
+    SetProcessDPIAware();
+    char dir[MAX_PATH];
+    GetModuleFileNameA(NULL, dir, MAX_PATH);
     char* slash = strrchr(dir, '\\');
     if (slash) *slash = '\0';
 
@@ -144,13 +149,16 @@ void sprite_show(const char* image_name)
     if (CreateProcessA(NULL, cmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
     {
         CloseHandle(pi.hThread);
-        Sleep(700);   
+        Sleep(700);
         sprite_hide();
         g_sprite = pi.hProcess;
     }
 }
+
 void sprite_pause(int ms)
-{ Sleep(ms); }
+{
+    Sleep(ms);
+}
 // чудо заглушки для игры без спрайтов и настройки окошка
 #else
 void sprite_show(const char* image_name) { (void)image_name; }
